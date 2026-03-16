@@ -1,0 +1,21 @@
+[tools]
+rust = "1.94.0"
+
+[env]
+RUST_BACKTRACE = "1"
+
+[tasks.test]
+run = "cargo test"
+description = "Run all tests"
+
+[tasks.build]
+run = "cargo build"
+description = "Build (native)"
+
+[tasks.check]
+run = "cargo check && cargo clippy -- -D warnings"
+description = "Check and lint"
+
+[tasks.fmt]
+run = "cargo fmt"
+description = "Format code"
