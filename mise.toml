@@ -10,7 +10,7 @@ description = "Run all tests"
 
 [tasks.build]
 run = "cargo build"
-description = "Build (native)"
+description = "Build"
 
 [tasks.check]
 run = "cargo check && cargo clippy -- -D warnings"
@@ -19,3 +19,11 @@ description = "Check and lint"
 [tasks.fmt]
 run = "cargo fmt"
 description = "Format code"
+
+[tasks.fmt-check]
+run = "cargo fmt --check"
+description = "Check formatting (CI)"
+
+[tasks.ci]
+depends = ["check", "test", "fmt-check"]
+description = "Full CI — check, test, fmt"
