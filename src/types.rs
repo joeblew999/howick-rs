@@ -60,6 +60,16 @@ pub enum Operation {
     /// End truss cut — marks the truss end cut angle position.
     /// Always comes in pairs: (length, 0.0) for the two ends.
     EndTruss(f64),
+
+    /// Notch — a rectangular cutout in the flange, used where members intersect.
+    /// Seen on wall tracks and studs at opening jambs and panel ends.
+    /// Comes in pairs: (position_far, position_near) defining the notch extents.
+    Notch(f64),
+
+    /// Service hole — larger punched hole for building services (electrical conduit,
+    /// plumbing, HVAC). Distinct from WEB holes: SERVICE_HOLE is for services,
+    /// WEB is for structural bolts/connections.
+    ServiceHole(f64),
 }
 
 impl Operation {
@@ -70,6 +80,8 @@ impl Operation {
             Operation::Swage(_) => "SWAGE",
             Operation::Web(_) => "WEB",
             Operation::EndTruss(_) => "END_TRUSS",
+            Operation::Notch(_) => "NOTCH",
+            Operation::ServiceHole(_) => "SERVICE_HOLE",
         }
     }
 
@@ -80,6 +92,8 @@ impl Operation {
             Operation::Swage(p) => *p,
             Operation::Web(p) => *p,
             Operation::EndTruss(p) => *p,
+            Operation::Notch(p) => *p,
+            Operation::ServiceHole(p) => *p,
         }
     }
 }

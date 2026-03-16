@@ -118,3 +118,79 @@ fn test_full_csv_component_count() {
     let frameset = csv::parse(full_csv).unwrap();
     assert_eq!(frameset.components.len(), 22);
 }
+
+// ── Wall panel tests (W1) ─────────────────────────────────────────────────
+
+#[test]
+fn test_parse_wall_header() {
+    let wall_csv = include_str!("fixtures/W1_full.csv");
+    let frameset = csv::parse(wall_csv).unwrap();
+    assert_eq!(frameset.name, "W1");
+    assert_eq!(frameset.profile.code, "S8908");
+}
+
+#[test]
+fn test_parse_wall_component_count() {
+    let wall_csv = include_str!("fixtures/W1_full.csv");
+    let frameset = csv::parse(wall_csv).unwrap();
+    assert_eq!(frameset.components.len(), 42);
+}
+
+#[test]
+fn test_parse_wall_notch_operations() {
+    let wall_csv = include_str!("fixtures/W1_full.csv");
+    let frameset = csv::parse(wall_csv).unwrap();
+
+    // W1-1 is the bottom track (4740mm) — has NOTCHes at door/window openings
+    let w1_1 = frameset.components.iter().find(|c| c.id == "W1-1").unwrap();
+    let notches: Vec<f64> = w1_1.operations.iter()
+        .filter_map(|op| if let Operation::Notch(p) = op { Some(*p) } else { None })
+        .collect();
+    assert_eq!(notches.len(), 2);
+    // Notch pair defines the opening extents
+    assert!(notches.contains(&1149.35));
+    assert!(notches.contains(&140.65));
+}
+
+#[test]
+fn test_parse_wall_service_holes() {
+    let wall_csv = include_str!("fixtures/W1_full.csv");
+    let frameset = csv::parse(wall_csv).unwrap();
+
+    // W1-9 is a long stud with many service holes (electrical/plumbing)
+    let w1_9 = frameset.components.iter().find(|c| c.id == "W1-9").unwrap();
+    let service_holes: Vec<f64> = w1_9.operations.iter()
+        .filter_map(|op| if let Operation::ServiceHole(p) = op { Some(*p) } else { None })
+        .collect();
+    assert_eq!(service_holes.len(), 9);
+}
+
+#[test]
+fn test_parse_wall_track_length() {
+    let wall_csv = include_str!("fixtures/W1_full.csv");
+    let frameset = csv::parse(wall_csv).unwrap();
+
+    // W1-1 and W1-2 are the top/bottom tracks — longest members in the wall
+    let w1_1 = frameset.components.iter().find(|c| c.id == "W1-1").unwrap();
+    let w1_2 = frameset.components.iter().find(|c| c.id == "W1-2").unwrap();
+    assert_eq!(w1_1.length_mm, 4740.0);
+    assert_eq!(w1_2.length_mm, 4740.0);
+    assert_eq!(w1_1.label, LabelOrientation::Normal);
+    assert_eq!(w1_2.label, LabelOrientation::Inverted);
+}
+
+#[test]
+fn test_wall_roundtrip() {
+    let wall_csv = include_str!("fixtures/W1_full.csv");
+    let original = csv::parse(wall_csv).unwrap();
+    let serialized = csv::serialize(&original).unwrap();
+    let reparsed = csv::parse(&serialized).unwrap();
+
+    assert_eq!(original.name, reparsed.name);
+    assert_eq!(original.components.len(), reparsed.components.len());
+    for (orig, re) in original.components.iter().zip(reparsed.components.iter()) {
+        assert_eq!(orig.id, re.id);
+        assert_eq!(orig.length_mm, re.length_mm);
+        assert_eq!(orig.operations.len(), re.operations.len());
+    }
+}

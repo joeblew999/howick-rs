@@ -116,6 +116,8 @@ fn parse_component(parts: &[&str], line_num: usize) -> Result<Component, HowickE
             "SWAGE" => Operation::Swage(position),
             "WEB" => Operation::Web(position),
             "END_TRUSS" => Operation::EndTruss(position),
+            "NOTCH" => Operation::Notch(position),
+            "SERVICE_HOLE" => Operation::ServiceHole(position),
             other => return Err(HowickError::UnknownOperation(other.to_string())),
         };
         operations.push(op);
