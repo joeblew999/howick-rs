@@ -126,6 +126,50 @@ See the companion repo: https://github.com/joeblew999/opcua-howick (planned)
 
 ---
 
+## Current Workflow (confirmed March 2026)
+
+**File transfer method: USB stick**
+
+The operator runs FrameBuilderMRD on a Windows PC, exports CSV files,
+copies them to a USB stick, then physically plugs the USB stick into
+the Howick machine's control PC. The machine software reads from a
+specific folder on that PC.
+
+**Integration path for opcua-howick:**
+
+```
+plat-trunk (browser)
+    ↓ POST /api/jobs/howick
+CF Worker → R2
+    ↓ polls every 5s
+opcua-howick (Pi or Windows PC on factory LAN)
+    ↓ copies CSV over network share or local path
+Howick control PC watched folder   ← THIS PATH IS THE MISSING PIECE
+    ↓
+Howick FRAMA machine runs it
+```
+
+The one remaining unknown: what folder path on the Howick control PC
+does the machine software watch? Currently the operator copies USB
+files into that folder manually. opcua-howick replaces the USB stick
+by writing directly to that folder over the network (SMB share) or
+locally if running on the same machine.
+
+**Setup options for Prin's factory:**
+
+Option A — Pi on LAN, SMB to Howick PC:
+  Pi running opcua-howick mounts the Howick PC's shared folder via SMB.
+  machine_input_dir = "//howick-pc/shared/jobs/"  (or similar)
+
+Option B — opcua-howick runs ON the Howick PC (Windows):
+  Build opcua-howick for Windows (x86_64-pc-windows-msvc).
+  machine_input_dir = "C:\\Howick\\Jobs\\"  (exact path TBC with Prin)
+  No network share needed — writes directly to the watched folder.
+
+Option B is simpler for the first demo. opcua-howick already builds
+for Windows via GitHub Actions (x86_64 Linux is built; Windows needs
+adding). One .exe, drop it on the Howick PC, configure config.toml.
+
 ## Open Questions for Prin
 
 1. What model is the Howick machine? (size determines model — under 3m = 3200, ~3.4m = 5600)
