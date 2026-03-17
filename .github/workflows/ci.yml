@@ -12,16 +12,16 @@ env:
 
 jobs:
   ci:
-    name: Check, Test, Fmt
+    name: CI
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Install mise
         uses: jdx/mise-action@v2
+        # mise reads mise.toml — installs rust 1.93.1 automatically
 
-      - name: Cache cargo registry
+      - name: Cache cargo
         uses: actions/cache@v4
         with:
           path: |
@@ -31,11 +31,5 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      - name: Check and lint
-        run: mise run check
-
-      - name: Run tests
-        run: mise run test
-
-      - name: Check formatting
-        run: cargo fmt --check
+      - name: CI (check + test + fmt-check)
+        run: mise run ci

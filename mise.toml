@@ -4,26 +4,50 @@ rust = "1.93.1"
 [env]
 RUST_BACKTRACE = "1"
 
-[tasks.test]
-run = "cargo test"
-description = "Run all tests"
+# ── Dev ───────────────────────────────────────────────────────────────────────
 
 [tasks.build]
+description = "Build (native)"
 run = "cargo build"
-description = "Build"
 
 [tasks.check]
+description = "Check + clippy"
 run = "cargo check && cargo clippy -- -D warnings"
-description = "Check and lint"
 
 [tasks.fmt]
-run = "cargo fmt"
 description = "Format code"
+run = "cargo fmt"
 
 [tasks.fmt-check]
-run = "cargo fmt --check"
 description = "Check formatting (CI)"
+run = "cargo fmt --check"
+
+# ── Test ──────────────────────────────────────────────────────────────────────
+
+[tasks.test]
+description = "Run all tests (unit + e2e validation against factory fixtures)"
+run = "cargo test"
+
+[tasks."test:unit"]
+description = "Run unit tests only"
+run = "cargo test --test integration"
+
+[tasks."test:e2e"]
+description = "Run e2e validation against real factory CSV files"
+run = "cargo test --test e2e_validation"
+
+# ── CI ────────────────────────────────────────────────────────────────────────
 
 [tasks.ci]
+description = "Full CI — check, test, fmt-check"
 depends = ["check", "test", "fmt-check"]
-description = "Full CI — check, test, fmt"
+
+# ── Publish ───────────────────────────────────────────────────────────────────
+
+[tasks."publish:dry"]
+description = "Dry-run publish to crates.io"
+run = "cargo publish --dry-run"
+
+[tasks.publish]
+description = "Publish to crates.io (requires CARGO_REGISTRY_TOKEN)"
+run = "cargo publish"
