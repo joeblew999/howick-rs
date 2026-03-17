@@ -1,14 +1,15 @@
 name: CI
 
+# All logic lives in mise.toml ci task:
+#   check → cargo check + clippy -D warnings
+#   test  → cargo test (unit + e2e against factory fixtures)
+#   fmt-check → cargo fmt --check
+
 on:
   push:
     branches: [master, main]
   pull_request:
     branches: [master, main]
-
-env:
-  RUST_BACKTRACE: 1
-  CARGO_TERM_COLOR: always
 
 jobs:
   ci:
@@ -17,19 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install mise
-        uses: jdx/mise-action@v2
-        # mise reads mise.toml — installs rust 1.93.1 automatically
+      - uses: jdx/mise-action@v2
 
-      - name: Cache cargo
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      - name: CI (check + test + fmt-check)
-        run: mise run ci
+      - run: mise run ci
