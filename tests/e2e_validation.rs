@@ -8,7 +8,6 @@
 ///   2. Key structural properties match (component count, operation types,
 ///      label pairing, length ranges, dimple pair spacing)
 ///   3. The roundtrip is lossless
-
 use howick_rs::csv;
 use howick_rs::types::{LabelOrientation, Operation, Unit};
 
@@ -29,11 +28,11 @@ fn make_simple_wall() -> howick_rs::types::Frameset {
     // Studs at 0, 600, 1200, 1800, 2400, 3000, 3600, 4200, 4740mm = 9 positions
     // Each stud: 2400mm high C-section
 
-    let wall_length  = 4740.0_f64;
-    let wall_height  = 2400.0_f64;
-    let spacing      = 600.0_f64;
-    let dimple_near  = 20.65_f64;
-    let dimple_gap   = 50.0_f64;
+    let wall_length = 4740.0_f64;
+    let wall_height = 2400.0_f64;
+    let spacing = 600.0_f64;
+    let dimple_near = 20.65_f64;
+    let dimple_gap = 50.0_f64;
 
     let mut components = Vec::new();
     let mut comp_idx = 1usize;
@@ -84,7 +83,9 @@ fn make_simple_wall() -> howick_rs::types::Frameset {
             });
             comp_idx += 1;
         }
-        if (x - wall_length).abs() < 1.0 { break; }
+        if (x - wall_length).abs() < 1.0 {
+            break;
+        }
         x = (x + spacing).min(wall_length);
     }
 
@@ -102,27 +103,52 @@ fn make_simple_wall() -> howick_rs::types::Frameset {
 // ── Structural property helpers ───────────────────────────────────────────────
 
 fn count_op(frameset: &howick_rs::types::Frameset, pred: fn(&Operation) -> bool) -> usize {
-    frameset.components.iter()
+    frameset
+        .components
+        .iter()
         .flat_map(|c| c.operations.iter())
         .filter(|op| pred(op))
         .count()
 }
 
 fn label_counts(frameset: &howick_rs::types::Frameset) -> (usize, usize) {
-    let inv = frameset.components.iter().filter(|c| c.label == LabelOrientation::Inverted).count();
-    let nrm = frameset.components.iter().filter(|c| c.label == LabelOrientation::Normal).count();
+    let inv = frameset
+        .components
+        .iter()
+        .filter(|c| c.label == LabelOrientation::Inverted)
+        .count();
+    let nrm = frameset
+        .components
+        .iter()
+        .filter(|c| c.label == LabelOrientation::Normal)
+        .count();
     (inv, nrm)
 }
 
 fn dimple_spacings(frameset: &howick_rs::types::Frameset) -> Vec<f64> {
     // For each component, find consecutive dimple positions and compute spacings
-    frameset.components.iter().flat_map(|c| {
-        let mut dimples: Vec<f64> = c.operations.iter()
-            .filter_map(|op| if let Operation::Dimple(p) = op { Some(*p) } else { None })
-            .collect();
-        dimples.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        dimples.windows(2).map(|w| (w[1] - w[0]).abs()).collect::<Vec<_>>()
-    }).collect()
+    frameset
+        .components
+        .iter()
+        .flat_map(|c| {
+            let mut dimples: Vec<f64> = c
+                .operations
+                .iter()
+                .filter_map(|op| {
+                    if let Operation::Dimple(p) = op {
+                        Some(*p)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            dimples.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            dimples
+                .windows(2)
+                .map(|w| (w[1] - w[0]).abs())
+                .collect::<Vec<_>>()
+        })
+        .collect()
 }
 
 // ── Tests against real T1 truss ───────────────────────────────────────────────
@@ -131,7 +157,10 @@ fn dimple_spacings(frameset: &howick_rs::types::Frameset) -> Vec<f64> {
 fn t1_real_has_label_symmetry() {
     let f = csv::parse(T1_REAL).unwrap();
     let (inv, nrm) = label_counts(&f);
-    assert_eq!(inv, nrm, "T1 real: INV/NRM must be equal, got {inv} INV {nrm} NRM");
+    assert_eq!(
+        inv, nrm,
+        "T1 real: INV/NRM must be equal, got {inv} INV {nrm} NRM"
+    );
 }
 
 #[test]
@@ -162,7 +191,12 @@ fn t1_real_all_operations_parse() {
 #[test]
 fn t1_real_chord_members_are_longest() {
     let f = csv::parse(T1_REAL).unwrap();
-    let max_len = f.components.iter().map(|c| c.length_mm as u64).max().unwrap();
+    let max_len = f
+        .components
+        .iter()
+        .map(|c| c.length_mm as u64)
+        .max()
+        .unwrap();
     // T1-1 and T1-2 are 3945mm — the chord members
     assert_eq!(max_len, 3945);
 }
@@ -172,16 +206,25 @@ fn t1_real_chord_members_are_longest() {
 #[test]
 fn w1_real_has_notch_and_service_hole() {
     let f = csv::parse(W1_REAL).unwrap();
-    assert!(count_op(&f, |op| matches!(op, Operation::Notch(_))) > 0,
-        "W1 real: must have NOTCH operations (door/window openings)");
-    assert!(count_op(&f, |op| matches!(op, Operation::ServiceHole(_))) > 0,
-        "W1 real: must have SERVICE_HOLE operations");
+    assert!(
+        count_op(&f, |op| matches!(op, Operation::Notch(_))) > 0,
+        "W1 real: must have NOTCH operations (door/window openings)"
+    );
+    assert!(
+        count_op(&f, |op| matches!(op, Operation::ServiceHole(_))) > 0,
+        "W1 real: must have SERVICE_HOLE operations"
+    );
 }
 
 #[test]
 fn w1_real_tracks_are_longest() {
     let f = csv::parse(W1_REAL).unwrap();
-    let max_len = f.components.iter().map(|c| c.length_mm as u64).max().unwrap();
+    let max_len = f
+        .components
+        .iter()
+        .map(|c| c.length_mm as u64)
+        .max()
+        .unwrap();
     // W1-1 and W1-2 are 4740mm — the top/bottom tracks
     assert_eq!(max_len, 4740);
 }
@@ -203,8 +246,8 @@ fn w1_real_profile_is_s8908() {
 #[test]
 fn generated_w1_parses_cleanly() {
     let frameset = make_simple_wall();
-    let csv_str  = csv::serialize(&frameset).unwrap();
-    let parsed   = csv::parse(&csv_str).unwrap();
+    let csv_str = csv::serialize(&frameset).unwrap();
+    let parsed = csv::parse(&csv_str).unwrap();
     assert_eq!(parsed.name, "W1");
     assert_eq!(parsed.unit, Unit::Millimetre);
     assert_eq!(parsed.profile.code, "S8908");
@@ -214,30 +257,41 @@ fn generated_w1_parses_cleanly() {
 fn generated_w1_has_label_symmetry() {
     let frameset = make_simple_wall();
     let (inv, nrm) = label_counts(&frameset);
-    assert_eq!(inv, nrm,
-        "Generated W1: INV/NRM must be equal, got {inv} INV {nrm} NRM");
+    assert_eq!(
+        inv, nrm,
+        "Generated W1: INV/NRM must be equal, got {inv} INV {nrm} NRM"
+    );
 }
 
 #[test]
 fn generated_w1_dimple_pairs_are_50mm() {
     let frameset = make_simple_wall();
     let spacings = dimple_spacings(&frameset);
-    let near_50  = spacings.iter().filter(|&&s| (s - 50.0).abs() < 1.0).count();
-    assert!(near_50 > 0,
-        "Generated W1: must have ~50mm dimple pair spacings");
+    let near_50 = spacings.iter().filter(|&&s| (s - 50.0).abs() < 1.0).count();
+    assert!(
+        near_50 > 0,
+        "Generated W1: must have ~50mm dimple pair spacings"
+    );
 }
 
 #[test]
 fn generated_w1_has_tracks_at_wall_length() {
-    let frameset  = make_simple_wall();
-    let max_len   = frameset.components.iter().map(|c| c.length_mm as u64).max().unwrap();
+    let frameset = make_simple_wall();
+    let max_len = frameset
+        .components
+        .iter()
+        .map(|c| c.length_mm as u64)
+        .max()
+        .unwrap();
     assert_eq!(max_len, 4740, "Track length must match wall length");
 }
 
 #[test]
 fn generated_w1_studs_are_2400mm() {
     let frameset = make_simple_wall();
-    let stud_count = frameset.components.iter()
+    let stud_count = frameset
+        .components
+        .iter()
         .filter(|c| (c.length_mm - 2400.0).abs() < 1.0)
         .count();
     assert!(stud_count > 0, "Must have 2400mm stud members");
@@ -245,32 +299,46 @@ fn generated_w1_studs_are_2400mm() {
 
 #[test]
 fn generated_w1_roundtrip_lossless() {
-    let original  = make_simple_wall();
-    let csv_str   = csv::serialize(&original).unwrap();
-    let reparsed  = csv::parse(&csv_str).unwrap();
+    let original = make_simple_wall();
+    let csv_str = csv::serialize(&original).unwrap();
+    let reparsed = csv::parse(&csv_str).unwrap();
 
     assert_eq!(original.components.len(), reparsed.components.len());
     for (o, r) in original.components.iter().zip(reparsed.components.iter()) {
-        assert_eq!(o.id,        r.id);
-        assert_eq!(o.label,     r.label);
+        assert_eq!(o.id, r.id);
+        assert_eq!(o.label, r.label);
         assert_eq!(o.length_mm, r.length_mm);
-        assert_eq!(o.operations.len(), r.operations.len(),
-            "Component {}: operation count mismatch", o.id);
+        assert_eq!(
+            o.operations.len(),
+            r.operations.len(),
+            "Component {}: operation count mismatch",
+            o.id
+        );
     }
 }
 
 #[test]
 fn generated_w1_has_service_holes_at_mid_height() {
     let frameset = make_simple_wall();
-    let service_holes: Vec<f64> = frameset.components.iter()
+    let service_holes: Vec<f64> = frameset
+        .components
+        .iter()
         .flat_map(|c| c.operations.iter())
-        .filter_map(|op| if let Operation::ServiceHole(p) = op { Some(*p) } else { None })
+        .filter_map(|op| {
+            if let Operation::ServiceHole(p) = op {
+                Some(*p)
+            } else {
+                None
+            }
+        })
         .collect();
     assert!(!service_holes.is_empty(), "Must have service holes");
     // All service holes should be at mid-height (1200mm for 2400mm studs)
     for pos in &service_holes {
-        assert!((*pos - 1200.0).abs() < 1.0,
-            "Service hole at {pos}mm, expected ~1200mm (mid stud height)");
+        assert!(
+            (*pos - 1200.0).abs() < 1.0,
+            "Service hole at {pos}mm, expected ~1200mm (mid stud height)"
+        );
     }
 }
 
@@ -292,8 +360,12 @@ fn real_w1_operation_types_superset_of_generated() {
     // The real file has richer operation types — confirms our generated
     // output is conservative (correct for simple walls, real file has trusses too)
     let real = csv::parse(W1_REAL).unwrap();
-    assert!(count_op(&real, |op| matches!(op, Operation::Notch(_))) > 0,
-        "Real W1 must have NOTCH (door/window openings) — our generator doesn't yet");
-    assert!(count_op(&real, |op| matches!(op, Operation::Swage(_))) > 0,
-        "Real W1 must have SWAGE (truss chord connections)");
+    assert!(
+        count_op(&real, |op| matches!(op, Operation::Notch(_))) > 0,
+        "Real W1 must have NOTCH (door/window openings) — our generator doesn't yet"
+    );
+    assert!(
+        count_op(&real, |op| matches!(op, Operation::Swage(_))) > 0,
+        "Real W1 must have SWAGE (truss chord connections)"
+    );
 }

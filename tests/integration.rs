@@ -39,9 +39,21 @@ fn test_parse_chord_member() {
     assert_eq!(t1_1.length_mm, 3945.0);
 
     // Count operations by type
-    let dimples = t1_1.operations.iter().filter(|op| matches!(op, Operation::Dimple(_))).count();
-    let lip_cuts = t1_1.operations.iter().filter(|op| matches!(op, Operation::LipCut(_))).count();
-    let webs = t1_1.operations.iter().filter(|op| matches!(op, Operation::Web(_))).count();
+    let dimples = t1_1
+        .operations
+        .iter()
+        .filter(|op| matches!(op, Operation::Dimple(_)))
+        .count();
+    let lip_cuts = t1_1
+        .operations
+        .iter()
+        .filter(|op| matches!(op, Operation::LipCut(_)))
+        .count();
+    let webs = t1_1
+        .operations
+        .iter()
+        .filter(|op| matches!(op, Operation::Web(_)))
+        .count();
 
     assert_eq!(dimples, 20);
     assert_eq!(lip_cuts, 36);
@@ -57,7 +69,11 @@ fn test_parse_web_member_with_swage() {
     assert_eq!(t1_3.label, LabelOrientation::Inverted);
     assert_eq!(t1_3.length_mm, 466.0);
 
-    let swages = t1_3.operations.iter().filter(|op| matches!(op, Operation::Swage(_))).count();
+    let swages = t1_3
+        .operations
+        .iter()
+        .filter(|op| matches!(op, Operation::Swage(_)))
+        .count();
     assert_eq!(swages, 2);
 }
 
@@ -69,8 +85,16 @@ fn test_parse_end_truss_member() {
     assert_eq!(t1_5.id, "T1-5");
     assert_eq!(t1_5.length_mm, 483.95);
 
-    let end_trusses: Vec<_> = t1_5.operations.iter()
-        .filter_map(|op| if let Operation::EndTruss(p) = op { Some(p) } else { None })
+    let end_trusses: Vec<_> = t1_5
+        .operations
+        .iter()
+        .filter_map(|op| {
+            if let Operation::EndTruss(p) = op {
+                Some(p)
+            } else {
+                None
+            }
+        })
         .collect();
 
     assert_eq!(end_trusses.len(), 2);
@@ -102,14 +126,21 @@ fn test_label_pair_symmetry() {
     // Use the full 22-component CSV to verify INV/NRM symmetry
     let full_csv = include_str!("fixtures/T1_full.csv");
     let frameset = csv::parse(full_csv).unwrap();
-    let inv_count = frameset.components.iter()
+    let inv_count = frameset
+        .components
+        .iter()
         .filter(|c| c.label == LabelOrientation::Inverted)
         .count();
-    let nrm_count = frameset.components.iter()
+    let nrm_count = frameset
+        .components
+        .iter()
         .filter(|c| c.label == LabelOrientation::Normal)
         .count();
-    assert_eq!(inv_count, nrm_count,
-        "Expected equal INV/NRM pairs, got {} INV and {} NRM", inv_count, nrm_count);
+    assert_eq!(
+        inv_count, nrm_count,
+        "Expected equal INV/NRM pairs, got {} INV and {} NRM",
+        inv_count, nrm_count
+    );
 }
 
 #[test]
@@ -143,8 +174,16 @@ fn test_parse_wall_notch_operations() {
 
     // W1-1 is the bottom track (4740mm) — has NOTCHes at door/window openings
     let w1_1 = frameset.components.iter().find(|c| c.id == "W1-1").unwrap();
-    let notches: Vec<f64> = w1_1.operations.iter()
-        .filter_map(|op| if let Operation::Notch(p) = op { Some(*p) } else { None })
+    let notches: Vec<f64> = w1_1
+        .operations
+        .iter()
+        .filter_map(|op| {
+            if let Operation::Notch(p) = op {
+                Some(*p)
+            } else {
+                None
+            }
+        })
         .collect();
     assert_eq!(notches.len(), 2);
     // Notch pair defines the opening extents
@@ -159,8 +198,16 @@ fn test_parse_wall_service_holes() {
 
     // W1-9 is a long stud with many service holes (electrical/plumbing)
     let w1_9 = frameset.components.iter().find(|c| c.id == "W1-9").unwrap();
-    let service_holes: Vec<f64> = w1_9.operations.iter()
-        .filter_map(|op| if let Operation::ServiceHole(p) = op { Some(*p) } else { None })
+    let service_holes: Vec<f64> = w1_9
+        .operations
+        .iter()
+        .filter_map(|op| {
+            if let Operation::ServiceHole(p) = op {
+                Some(*p)
+            } else {
+                None
+            }
+        })
         .collect();
     assert_eq!(service_holes.len(), 9);
 }

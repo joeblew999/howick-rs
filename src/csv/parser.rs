@@ -29,11 +29,15 @@ pub fn parse(input: &str) -> Result<Frameset, HowickError> {
 
         match parts[0] {
             "UNIT" => {
-                let u = parts.get(1).ok_or_else(|| HowickError::MissingField("UNIT value".into()))?;
+                let u = parts
+                    .get(1)
+                    .ok_or_else(|| HowickError::MissingField("UNIT value".into()))?;
                 unit = Some(parse_unit(u)?);
             }
             "PROFILE" => {
-                let code = parts.get(1).ok_or_else(|| HowickError::MissingField("PROFILE code".into()))?;
+                let code = parts
+                    .get(1)
+                    .ok_or_else(|| HowickError::MissingField("PROFILE code".into()))?;
                 let description = parts.get(2).unwrap_or(&"").to_string();
                 profile = Some(Profile {
                     code: code.to_string(),
@@ -41,7 +45,9 @@ pub fn parse(input: &str) -> Result<Frameset, HowickError> {
                 });
             }
             "FRAMESET" => {
-                let name = parts.get(1).ok_or_else(|| HowickError::MissingField("FRAMESET name".into()))?;
+                let name = parts
+                    .get(1)
+                    .ok_or_else(|| HowickError::MissingField("FRAMESET name".into()))?;
                 frameset_name = Some(name.to_string());
             }
             "COMPONENT" => {
