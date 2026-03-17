@@ -1,9 +1,8 @@
 name: CI
 
-# All logic lives in mise.toml ci task:
-#   check → cargo check + clippy -D warnings
-#   test  → cargo test (unit + e2e against factory fixtures)
-#   fmt-check → cargo fmt --check
+# Rust version pinned in rust-toolchain.toml (rustup standard).
+# mise handles task running only — NOT rust installation.
+# Logic lives in mise.toml ci task: check + test + fmt-check
 
 on:
   push:
@@ -18,7 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: jdx/mise-action@v2
+      # Install rust from rust-toolchain.toml (1.93.0 + rustfmt + clippy)
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.93.0"
+          components: rustfmt,clippy
 
       - uses: actions/cache@v4
         with:
@@ -28,5 +31,10 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
+
+      # mise handles tasks — rust already installed above
+      - uses: jdx/mise-action@v2
+        with:
+          install: false   # don't install tools — rust already handled above
 
       - run: mise run ci
